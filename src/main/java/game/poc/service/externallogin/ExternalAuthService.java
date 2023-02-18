@@ -8,6 +8,7 @@ import java.util.List;
 
 @Component
 public interface ExternalAuthService {
-    void saveToken(ExternalAuth externalAuth);
-    String getAuthToken(String emailId);
+    ExternalAuth saveToken(ExternalAuth externalAuth);
+    void saveAuthCode(String state, String code);
+    String getAuthCode(String state);
 }

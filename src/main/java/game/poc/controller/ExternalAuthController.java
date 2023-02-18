@@ -25,16 +25,39 @@ public class ExternalAuthController {
         ResponseEntity.ok();
     }
 
-    @PostMapping("/saveAuthToken")
-    public ResponseEntity<String> saveAuthToken(@RequestBody ExternalAuth externalAuth) {
-        externalAuth.setSessionId(jwtToken.generateToken(externalAuth.getLocalId(),externalAuth.getEmail(),null));
-        externalAuthService.saveToken(externalAuth);
-        return new ResponseEntity<>("SessionID = " + externalAuth.getSessionId(), HttpStatus.CREATED);
+    @PostMapping("addUserInfo")
+    public ResponseEntity<ExternalAuth> addExternalUser(@RequestBody ExternalAuth externalAuth){
+        return new ResponseEntity<>(externalAuthService.saveToken(externalAuth), HttpStatus.OK);
     }
 
-    @GetMapping("/getAuthToken")
-    public ResponseEntity<String> getAuthToken(@RequestParam String emailId) {
-        return new ResponseEntity<>("AuthToken = " +externalAuthService.getAuthToken(emailId), HttpStatus.OK);
+
+    @GetMapping("saveAuthToken")
+    public ResponseEntity<String> saveAuthToken(@RequestParam String state, @RequestParam String code, @RequestParam String scope){
+
+        externalAuthService.saveAuthCode(state, code);
+        return new ResponseEntity<>("Login successful. Return back to application.", HttpStatus.CREATED);
+    }
+
+
+    @GetMapping("getAuthToken")
+    public ResponseEntity<String> getAuthToken(@RequestParam String state){
+
+        int maxWaitTime = 10000;
+        int waitTime = 1000;
+        int i = 1;
+        String authCode = externalAuthService.getAuthCode(state);
+
+        while (authCode == null && (waitTime * i) < maxWaitTime){
+
+            try{
+                Thread.sleep(waitTime);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            i++;
+            authCode = externalAuthService.getAuthCode(state);
+        }
+        return new ResponseEntity<>(authCode, HttpStatus.OK);
     }
 
 }
