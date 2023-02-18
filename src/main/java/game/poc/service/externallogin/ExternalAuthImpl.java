@@ -21,19 +21,14 @@ public class ExternalAuthImpl implements ExternalAuthService {
     @Override
     public ExternalAuth saveToken(ExternalAuth requestData) {
 
-        Optional<ExternalAuth> dataBaseData = externalAuthRepository.findByEmail(requestData.getEmail());
-        ExternalAuth data;
-        if (dataBaseData.isPresent()) {
 
-            data = dataBaseData.get();
-            data.setSessionId(jwtToken.generateToken(data.getLocalId(), data.getEmail(), null));
-        } else {
-            requestData.setSessionId(jwtToken.generateToken(requestData.getLocalId(), requestData.getEmail(), null));
-            data = requestData;
-        }
+        ExternalAuth data = externalAuthRepository
+                .findByEmail(requestData.getEmail())
+                .orElse(requestData);
 
-        externalAuthRepository.save(requestData);
-        return data;
+        data.setSessionId(jwtToken.generateToken(data.getLocalId(), data.getEmail(), null));
+
+        return externalAuthRepository.save(data);
     }
 
     @Override
@@ -47,6 +42,22 @@ public class ExternalAuthImpl implements ExternalAuthService {
     }
 
     public String getAuthCode(String state){
-        return externalAuthParamRepository.findByState(state).map(ExternalAuthParam::getCode).orElse(null);
+
+        int maxWaitTime = 10000;
+        int waitTime = 1000;
+        int i = 1;
+        String authCode = externalAuthParamRepository.findByState(state).map(ExternalAuthParam::getCode).orElse(null);
+
+        while (authCode == null && (waitTime * i) < maxWaitTime){
+
+            try{
+                Thread.sleep(waitTime);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            i++;
+            authCode = externalAuthParamRepository.findByState(state).map(ExternalAuthParam::getCode).orElse(null);
+        }
+        return authCode;
     }
 }

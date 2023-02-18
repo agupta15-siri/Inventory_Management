@@ -5,6 +5,7 @@ import java.util.List;
 import game.poc.entity.Asset;
 import game.poc.entity.Mapping;
 import game.poc.entity.User;
+import game.poc.entity.UserInventory;
 import game.poc.service.Inventorymanagement.InventoryManagementService;
 import lombok.RequiredArgsConstructor;
 
@@ -62,5 +63,16 @@ public class UserManagementController {
     @RequestMapping(value = "/health", method = RequestMethod.GET)
     public ResponseEntity<?> health() throws Exception {
         return ResponseEntity.status(200).body("Ok");
+    }
+
+
+    @GetMapping("/fetchUserInventory")
+    public UserInventory getUserInventoryFromSession(@RequestHeader String userSessionID) {
+        return inventoryManagementService.fetchUserInventory(userSessionID);
+    }
+
+    @PutMapping("/updateInventory/{assetName}&{updateAssetBy}")
+    public UserInventory updateUserInventoryFromSession(@RequestHeader String userSessionID, @PathVariable("assetName") String assetName, @PathVariable("updateAssetBy") String updateBy) {
+        return inventoryManagementService.updateUserInventory(userSessionID, assetName, updateBy);
     }
 }

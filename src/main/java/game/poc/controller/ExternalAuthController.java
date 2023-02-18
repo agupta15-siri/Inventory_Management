@@ -41,23 +41,7 @@ public class ExternalAuthController {
 
     @GetMapping("getAuthToken")
     public ResponseEntity<String> getAuthToken(@RequestParam String state){
-
-        int maxWaitTime = 10000;
-        int waitTime = 1000;
-        int i = 1;
-        String authCode = externalAuthService.getAuthCode(state);
-
-        while (authCode == null && (waitTime * i) < maxWaitTime){
-
-            try{
-                Thread.sleep(waitTime);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            i++;
-            authCode = externalAuthService.getAuthCode(state);
-        }
-        return new ResponseEntity<>(authCode, HttpStatus.OK);
+        return new ResponseEntity<>(externalAuthService.getAuthCode(state), HttpStatus.OK);
     }
 
 }

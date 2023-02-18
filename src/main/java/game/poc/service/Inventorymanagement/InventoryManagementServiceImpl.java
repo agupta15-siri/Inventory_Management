@@ -3,16 +3,17 @@ package game.poc.service.Inventorymanagement;
 import game.poc.entity.Asset;
 import game.poc.entity.Mapping;
 import game.poc.entity.User;
-import game.poc.repository.AssetsRepository;
-import game.poc.repository.DelayRepository;
+import game.poc.entity.UserInventory;
+import game.poc.repository.*;
 import lombok.RequiredArgsConstructor;
 import game.poc.exception.ResourceNotFoundException;
-import game.poc.repository.MappingRepository;
-import game.poc.repository.UserRepository;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,6 +26,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     private final MappingRepository mappingRepository;
     private final AssetsRepository assetsRepository;
     private final DelayRepository delayRepository;
+    private final UserInventoryRepository userInventoryRepository;
 
     @Override
     public Mapping updateInventory(Long userId, String inventoryName, String counts) {
@@ -51,6 +53,38 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         return mappedUser.get();
 
 
+    }
+    @Override
+    public UserInventory updateUserInventory(String sessionId, String assetName, String updateBy){
+
+        String userEmail = getTokenParam(sessionId, "email");
+
+        UserInventory userInventory = userInventoryRepository
+                .findByUserEmail(userEmail)
+                .orElse(null);
+
+        if (userInventory == null){
+            userInventory = addUserInventory(userEmail);
+        }
+
+        userInventory.setTotalAsset(userInventory.getTotalAsset() + Integer.parseInt(updateBy));
+
+        return userInventoryRepository.save(userInventory);
+    }
+
+    @Override
+    public UserInventory fetchUserInventory(String sessionId) {
+
+        String userEmail = getTokenParam(sessionId, "email");
+
+        UserInventory userInventory = userInventoryRepository
+                .findByUserEmail(userEmail)
+                .orElse(null);
+
+        if (userInventory == null){
+            return addUserInventory(userEmail);
+        }
+        return userInventory;
     }
 
     @Override
@@ -112,6 +146,34 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private String getTokenParam(String token, String param) {
+
+        String[] chunks = token.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String payload = new String(decoder.decode(chunks[1]));
+
+        try {
+            JSONObject jsonObject = new JSONObject(payload);
+            return jsonObject.getString(param);
+
+        } catch (JSONException ex){
+            ex.printStackTrace();
+        }
+        return null;
+    }
+    public UserInventory addUserInventory(String userEmail){
+
+
+            UserInventory userInventory = new UserInventory();
+
+            userInventory.setUserEmail(userEmail);
+            userInventory.setTotalAsset(0);
+            userInventory.setAssetName("Fruit");
+
+            return userInventoryRepository.save(userInventory);
+
     }
 
 }
