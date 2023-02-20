@@ -51,4 +51,5 @@ public class loginController {
     public ResponseEntity<?> health() throws Exception {
         return ResponseEntity.status(200).body("Ok");
     }
+
 }
