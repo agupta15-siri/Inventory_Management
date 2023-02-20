@@ -1,0 +1,72 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Identity Service</title>
+<!--    <link rel="icon" href="http://example.com/favicon.png">-->
+    <link th:href="@{/main.css}" rel="stylesheet" />
+
+</head>
+<body>
+
+<span th:id="card-container-1" th:if="${ not#lists.isEmpty(registeredUsers)}">
+    <table th:id="contentTable" th:class="card">
+        <tr th:id="card-header">
+            <th th:id="card-header-text">Total Users</th>
+        </tr>
+        <tr th:id="card-content" th:each="user : ${registeredUsers}">
+            <td th:id="card-content-text" th:text="${user}"></td>
+        </tr>
+    </table>
+</span>
+
+<span th:id="card-container-2" th:if="${ not#lists.isEmpty(activeUsers)}">
+    <table th:id="contentTable" th:class="card">
+        <tr th:id="card-header">
+            <th th:id="card-header-text">Active Users</th>
+        </tr>
+        <tr th:id="card-content" th:each="user : ${activeUsers}">
+            <td th:id="card-content-text" th:text="${user}"></td>
+        </tr>
+    </table>
+</span>
+
+<span th:id="card-container-3" th:if="${ not#lists.isEmpty(numOfLogin)}">
+    <table th:id="contentTable" th:class="card">
+        <tr th:id="card-header">
+            <th th:id="card-header-text">Total Login(s)</th>
+        </tr>
+        <tr th:id="card-content" th:each="user : ${numOfLogin}">
+            <td th:id="card-content-text" th:text="${user}"></td>
+        </tr>
+    </table>
+</span>
+
+<div th:id="summary" th:if="${ not#lists.isEmpty(completeList)}">
+    <h2>User Report</h2>
+    <table th:id="contentTable">
+        <tr>
+            <th>Sr. No.</th>
+            <th>Email Address</th>
+            <th>Number of Login</th>
+            <th>Asset</th>
+            <th>Inventory</th>
+            <th>Is Active?</th>
+        </tr>
+        <tr th:each="user : ${completeList}">
+            <td th:text="${user.id}">1</td>
+            <td th:text="${user.userEmail}"></td>
+            <td th:text="${user.numOfLogin}"></td>
+            <td th:text="${user.assetName}"></td>
+            <td th:text="${user.assetCount}"></td>
+            <td th:text="${user.active}"></td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

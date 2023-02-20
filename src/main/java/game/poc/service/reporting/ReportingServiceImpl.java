@@ -1,6 +1,7 @@
 package game.poc.service.reporting;
 
 import game.poc.entity.ExternalAuth;
+import game.poc.entity.LoginCount;
 import game.poc.entity.UserInventory;
 import game.poc.entity.UserLogin;
 import game.poc.repository.ExternalAuthRepository;
@@ -31,14 +32,35 @@ public class ReportingServiceImpl implements ReportingService{
                 externalAuthRepository
                         .findAll()
                         .stream()
-                        .filter(user -> Instant.now().until(Instant.ofEpochSecond(Long.parseLong(Objects.requireNonNull(JwtToken.getTokenParam(user.getSessionId(), "exp")))), ChronoUnit.SECONDS) > 0)
+                        .filter(user -> {
+
+                            String expiryTime = JwtToken.getTokenParam(user.getSessionId(), "exp");
+                            if (expiryTime != null){
+                                return Instant.now().until(Instant.ofEpochSecond(Long.parseLong(expiryTime)), ChronoUnit.SECONDS) > 0;
+                            } else {
+                                return false;
+                            }
+                        })
                         .collect(Collectors.toList());
 
         List<UserLogin> userLoginList =
                 userLoginRepository
                         .findAll()
                         .stream()
-                        .filter(user -> Instant.now().until(Instant.ofEpochSecond(Long.parseLong(Objects.requireNonNull(JwtToken.getTokenParam(user.getUserSessionID(), "exp")))), ChronoUnit.SECONDS) > 0)
+                        .filter(user -> {
+
+                            if (user.getUserSessionID() != null){
+
+                                String expiryTime = JwtToken.getTokenParam(user.getUserSessionID(), "exp");
+                                if (expiryTime != null) {
+                                    return Instant.now().until(Instant.ofEpochSecond(Long.parseLong(expiryTime)), ChronoUnit.SECONDS) > 0;
+                                } else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        })
                         .collect(Collectors.toList());
 
         List<String> activeUserList = userLoginList.stream().map(UserLogin::getEmail).collect(Collectors.toList());
@@ -61,15 +83,21 @@ public class ReportingServiceImpl implements ReportingService{
         return userInventoryRepository.findAll();
     }
 
-    public Map<String, Integer> numberOfLogins(){
+    public List<LoginCount> numberOfLogins(){
 
         List<String> userLoginList = userAuditRepository.findByUserActions();
-        Map<String, Integer> userMap = new HashMap<>();
+        List<LoginCount> loginCountList = new ArrayList<>();
 
         for(String str: userLoginList){
+
             String[] a = str.split(",");
-            userMap.put(a[0], Integer.parseInt(a[1]));
+
+            LoginCount l = new LoginCount();
+            l.setUserEmail(a[0]);
+            l.setLoginCount(Integer.parseInt( a[1]));
+
+            loginCountList.add(l);
         }
-        return userMap;
+        return loginCountList;
     }
 }

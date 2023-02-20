@@ -1,5 +1,6 @@
 package game.poc.service.reporting;
 
+import game.poc.entity.LoginCount;
 import game.poc.entity.UserInventory;
 import org.springframework.stereotype.Service;
 
@@ -11,5 +12,5 @@ public interface ReportingService {
     List<String> numActiveUsers();
     List<String> numTotalUsers();
     List<UserInventory> usersInventory();
-    Map<String, Integer> numberOfLogins();
+    List<LoginCount> numberOfLogins();
 }
