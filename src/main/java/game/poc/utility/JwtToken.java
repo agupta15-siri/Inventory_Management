@@ -4,6 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.experimental.UtilityClass;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -33,7 +36,7 @@ public class JwtToken {
                 .setSubject(email)
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plus(3, ChronoUnit.MINUTES.MINUTES)))
+                .setExpiration(Date.from(Instant.now().plus(30, ChronoUnit.MINUTES.MINUTES)))
                 .signWith(hmacKey)
                 .compact();
     }
@@ -45,5 +48,21 @@ public class JwtToken {
                 .build()
                 .parseClaimsJws(jwtString);
 
+    }
+
+    public static String getTokenParam(String token, String param) {
+
+        String[] chunks = token.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String payload = new String(decoder.decode(chunks[1]));
+
+        try {
+            JSONObject jsonObject = new JSONObject(payload);
+            return jsonObject.getString(param);
+
+        } catch (JSONException ex){
+            ex.printStackTrace();
+        }
+        return null;
     }
 }

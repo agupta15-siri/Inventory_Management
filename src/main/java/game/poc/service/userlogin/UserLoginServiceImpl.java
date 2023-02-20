@@ -4,7 +4,9 @@ import game.poc.crypt.RSAEncryptionDecryptionService;
 import game.poc.entity.UserLogin;
 import game.poc.exception.ResourceNotFoundException;
 import game.poc.repository.*;
+import game.poc.utility.Constants;
 import game.poc.utility.JwtToken;
+import game.poc.utility.UserAuditUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     private final UserLoginRepository userLoginRepository;
     private final JwtToken jwtToken;
     private final RSAEncryptionDecryptionService rsaEncryptionDecryptionService;
+    private final UserAuditRepository userAuditRepository;
 
     @Override
     public List<UserLogin> getUsers() {
@@ -41,6 +44,9 @@ public class UserLoginServiceImpl implements UserLoginService {
             userLogin.setUserName(rsaEncryptionDecryptionService.encryptData(userLogin.getUserName()));
             userLogin.setPassword(rsaEncryptionDecryptionService.encryptData(userLogin.getPassword()));
             userLogin.setAccountID(UUID.randomUUID().toString().substring(0, 9));
+
+            userAuditRepository.save(UserAuditUtil.createUserAudit(Constants.AUDIT_USER_REGISTER, userLogin.getEmail(), userLogin.getAccountID()));
+
             return userLoginRepository.save(userLogin);
         } else throw new ResourceNotFoundException("User already registered with email ID:" + userLogin.getEmail());
     }
@@ -50,12 +56,18 @@ public class UserLoginServiceImpl implements UserLoginService {
         Optional<UserLogin> optionalUserLogin = userLoginRepository.findByEmail(userLogin.getEmail());
         UserLogin userLoginDB;
         if (optionalUserLogin.isPresent()) {
+
             userLoginDB = optionalUserLogin.get();
             String userEmailDB = userLoginDB.getEmail();
             String userPasswordDB = rsaEncryptionDecryptionService.decryptData(userLoginDB.getPassword());
+
             if (userLogin.getEmail().equalsIgnoreCase(userEmailDB) && userLogin.getPassword().equalsIgnoreCase(userPasswordDB)) {
+
                 userLoginDB.setUserSessionID(jwtToken.generateToken(userLogin.getUserName(), userLogin.getEmail(), userLogin.getAccountID()));
                 userLoginRepository.save(userLoginDB);
+
+                userAuditRepository.save(UserAuditUtil.createUserAudit(Constants.AUDIT_USER_LOGIN, JwtToken.getTokenParam(userLoginDB.getUserSessionID(),"email"), JwtToken.getTokenParam(userLoginDB.getUserSessionID(),"jti")));
+
             }else throw new ResourceNotFoundException("Email ID or password is incorrect.");
 
         } else throw new ResourceNotFoundException("Email ID not found :" + userLogin.getEmail());

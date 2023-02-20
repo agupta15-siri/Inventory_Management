@@ -5,6 +5,9 @@ import game.poc.entity.Mapping;
 import game.poc.entity.User;
 import game.poc.entity.UserInventory;
 import game.poc.repository.*;
+import game.poc.utility.Constants;
+import game.poc.utility.JwtToken;
+import game.poc.utility.UserAuditUtil;
 import lombok.RequiredArgsConstructor;
 import game.poc.exception.ResourceNotFoundException;
 import org.json.JSONException;
@@ -27,6 +30,7 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
     private final AssetsRepository assetsRepository;
     private final DelayRepository delayRepository;
     private final UserInventoryRepository userInventoryRepository;
+    private final UserAuditRepository userAuditRepository;
 
     @Override
     public Mapping updateInventory(Long userId, String inventoryName, String counts) {
@@ -69,6 +73,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
 
         userInventory.setTotalAsset(userInventory.getTotalAsset() + Integer.parseInt(updateBy));
 
+        userAuditRepository.save(UserAuditUtil.createUserAudit(Constants.AUDIT_UPDATE_INVENTORY, userEmail, JwtToken.getTokenParam(sessionId,"jti")));
+
         return userInventoryRepository.save(userInventory);
     }
 
@@ -80,6 +86,8 @@ public class InventoryManagementServiceImpl implements InventoryManagementServic
         UserInventory userInventory = userInventoryRepository
                 .findByUserEmail(userEmail)
                 .orElse(null);
+
+        userAuditRepository.save(UserAuditUtil.createUserAudit(Constants.AUDIT_FETCH_INVENTORY, userEmail, JwtToken.getTokenParam(sessionId,"jti")));
 
         if (userInventory == null){
             return addUserInventory(userEmail);
