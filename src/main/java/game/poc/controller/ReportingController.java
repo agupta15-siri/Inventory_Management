@@ -10,10 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/unordinal/reports")
@@ -25,39 +22,23 @@ public class ReportingController {
     @GetMapping("/")
     public String reportView(Model model){
 
-        List<String> activeUsers = fetchActiveUsers();
-        List<String> registeredUsers = fetchRegisteredUsers();
-        List<LoginCount> loginCountList = fetchNumberOfLogin();
-        List<UserInventory> usersInventory = fetchAllUsersInventory();
+        List<Report> reportList = reportingService.reportingInfo();
 
+        int activeUserCount = 0;
+        int registeredUserCount = reportList.size();
+        int totalLogins = 0;
 
-        List<Report> reportList = new ArrayList<>();
-        int i=1;
-        for (String user: registeredUsers){
+        for (Report r: reportList){
 
-            Report r = new Report();
-
-            r.setId(i); i++;
-            r.setUserEmail(user);
-            r.setActive(activeUsers.contains(user));
-
-            r.setNumOfLogin(loginCountList.stream().filter(lUser -> lUser.getUserEmail().equalsIgnoreCase(user)).map(LoginCount::getLoginCount).findFirst().orElse(0));
-
-            UserInventory userInv = usersInventory.stream().filter(iUser -> iUser.getUserEmail().equalsIgnoreCase(user)).findFirst().orElse(null);
-            if (userInv != null){
-                r.setAssetName(userInv.getAssetName());
-                r.setAssetCount(userInv.getTotalAsset());
-            } else {
-                r.setAssetName("Fruit");
-                r.setAssetCount(0);
+            if (r.isActive()){
+                activeUserCount++;
             }
-
-            reportList.add(r);
+            totalLogins += r.getNumOfLogin();
         }
 
-        model.addAttribute("activeUsers", activeUsers.size());
-        model.addAttribute("registeredUsers", registeredUsers.size());
-        model.addAttribute("numOfLogin", loginCountList.stream().mapToInt(LoginCount::getLoginCount).sum());
+        model.addAttribute("activeUsers", activeUserCount);
+        model.addAttribute("registeredUsers", registeredUserCount);
+        model.addAttribute("numOfLogin", totalLogins);
         model.addAttribute("completeList", reportList);
 
         return "index";
